@@ -184,8 +184,8 @@ def error_502(error):
     return jsonify({"status": "3x0000", "message": "database operation error"})
 
 
-@app.errorhandler(507)
-def error_507(error):
+@app.errorhandler(501)
+def error_501(error):
     return jsonify({"status": "7x0001", "message": "Video Interception Picture Failed"})
 
 
@@ -417,6 +417,10 @@ def cow_list_by_company_id():
         :param instance: data
         :return: message dict
         """
+        # Get registered images and encode them to base64
+        pre_files = utils.get_files(
+            os.path.join(config.base_images_path, instance.company_id, instance.rfid_code) + os.sep, 1)
+        pre_items = utils.read_image_to_base64(pre_files)
         return {
             "userid": g.user.userid,
             "aid": instance.aid,
@@ -426,7 +430,7 @@ def cow_list_by_company_id():
             "gather_time": str(instance.gather_time),
             "health_status": instance.health_status,
             "extra_info": instance.extra_info,
-            "folder_path": instance.folder_path
+            "items": pre_items
         }
 
     current_page = request.json.get("currentpage")

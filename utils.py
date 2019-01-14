@@ -113,7 +113,7 @@ def process_video_to_image(abort, logger, video, folder_path, rfid_code, xvalue,
         print("error")
         shutil.rmtree(folder_path)
         logger.error("Failed to store pictures from cow rfid_code = {} , so delete the folder".format(rfid_code))
-        abort(507)
+        abort(501)
         return False
     return True
 
