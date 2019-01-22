@@ -215,9 +215,9 @@ def new_user():
     try:
         db.session.add(user)
         db.session.commit()
-        logger.info("Database insert user(userid={}，company_id={}) succeeded".format(userid, company_id))
+        logger.info("Database insert user(userid={},company_id={}) succeeded".format(userid, company_id))
     except:
-        logger.error("failure to store user(userid={}，company_id={}) to database".format(userid, company_id))
+        logger.error("failure to store user(userid={},company_id={}) to database".format(userid, company_id))
         abort(502)
     return (jsonify({'userid': user.userid, 'company_id': user.company_id}), 201,
             {'Location': url_for('get_user', userid=user.userid, _external=True)})
@@ -292,13 +292,13 @@ def prospect():
     if rfid_code == predict_code and result >= config.min_predict:
         resoult = 1
         logger.info(
-            "From ip {} -> cow rfid_code = {}，company_id = {} prediction success,result = {}%".format(ip, rfid_code,
+            "From ip {} -> cow rfid_code = {},company_id = {} prediction success,result = {}%".format(ip, rfid_code,
                                                                                                       company_id,
                                                                                                       result))
     else:
         resoult = 0
         logger.info(
-            "From ip {} -> cow rfid_code = {}，company_id = {} prediction failure,result = {}%".format(ip, rfid_code,
+            "From ip {} -> cow rfid_code = {},company_id = {} prediction failure,result = {}%".format(ip, rfid_code,
                                                                                                       company_id,
                                                                                                       result))
 
