@@ -19,7 +19,8 @@ import logging.config
 
 if not os.path.exists('logs'):
     os.mkdir('logs')
-logging.config.fileConfig("log.conf", defaults=None, disable_existing_loggers=True)
+logging.config.fileConfig(os.path.join(os.path.dirname(os.path.abspath(__file__)), r"log.conf"), defaults=None,
+                          disable_existing_loggers=True)
 logger = logging.getLogger("log")
 
 # DOCS https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor
