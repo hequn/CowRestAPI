@@ -102,11 +102,18 @@ def process_video_to_image(abort, logger, video, folder_path, rfid_code, xvalue,
         success, image = vid_cap.read()
         count = 0
         while success:
-            vid_cap.set(cv2.CAP_PROP_POS_MSEC, 0.5 * 1000 * count)
+            # Get the Current Position of Video Interception
+            temp = vid_cap.get(0)
             cv2.imwrite(folder_path + rfid_code + "_" + str(count) + "_" + "1" + ".jpg",
                         image[yvalue:yvalue + height, xvalue:xvalue + width])  # save frame as JPEG file
-            success, image = vid_cap.read()
             count += 1
+            vid_cap.set(cv2.CAP_PROP_POS_MSEC, 0.5 * 1000 * count)
+            success, image = vid_cap.read()
+            # For special video interception processing
+            if temp == vid_cap.get(0):
+                os.remove(folder_path + rfid_code + "_" + str(count - 1) + "_" + "1" + ".jpg")
+                count -= 1
+                break
         print('Total frames: ', count)
         logger.info("Successful pictures storage from cow rfid_code = {}".format(rfid_code))
     except:
