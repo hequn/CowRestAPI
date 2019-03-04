@@ -223,6 +223,29 @@ def new_user():
             {'Location': url_for('get_user', userid=user.userid, _external=True)})
 
 
+@app.route('/api/login', methods=['POST'])
+def login():
+    """
+    User login
+    :return: companyid
+    """
+    userid = request.json.get('userid')
+    password = request.json.get('password')
+    # verify the existence of parameters
+    utils.verify_param(abort, logger, error_code=400, userid=userid, password=password, method_name="login")
+    user = User.query.filter_by(userid=userid).first()
+    if user:
+        if user.verify_password(password):
+            # If the userid and password is correct, return company_id
+            company_id = User.query.filter_by(userid=userid).first().company_id
+        else:
+            # returned to empty incorrectly
+            company_id = ""
+    else:
+        company_id = ""
+    return (jsonify({'companyid': company_id}))
+
+
 @app.route('/api/users/<int:userid>')
 def get_user(userid):
     """
