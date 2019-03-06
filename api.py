@@ -16,6 +16,8 @@ import json
 import config
 import datetime
 import logging.config
+import glob
+import shutil
 
 if not os.path.exists('logs'):
     os.mkdir('logs')
@@ -157,7 +159,7 @@ def error_403(error):
 
 @app.errorhandler(404)
 def error_404(error):
-    return str(error)
+    return jsonify({"status": "8x0001", "message": "Accessed resources do not exist"})
 
 
 @app.errorhandler(405)
@@ -498,6 +500,76 @@ def verify_cow_exists():
         'userid': user_id,
         'companyid': company_id,
         'rfid_code': rfid_code,
+        'result': result
+    })
+
+
+@app.route('/api/list_detail', methods=['POST'])
+@auth.login_required
+def list_detail():
+    """
+     Preview the picture of cow
+    :return: image base64
+    """
+    company_id = request.json.get('companyid')
+    rfid_code = request.json.get('rfidcode')
+
+    utils.verify_param(abort, logger, error_code=400, company_id=company_id, rfid_code=rfid_code,
+                       method_name="list_detail")
+    pic_path = os.path.join(config.base_images_path, company_id, rfid_code) + os.sep
+    pre_files = glob.glob(pic_path + '*.jpg')
+    pic_num = len(pre_files)
+    if pic_num > 0:
+        step = pic_num // 10
+        if step == 0:
+            step = 1
+        pre_items = utils.read_image_to_base64(pre_files[0:pic_num:step])
+        return jsonify({
+            "items": pre_items
+        })
+    else:
+        logger.error("Folder {} not exist or No picture".format(pic_path))
+        abort(404)
+
+
+@app.route('/api/delete_pic', methods=['POST'])
+@auth.login_required
+def delete_pic():
+    """
+    Delete folders with poor image quality
+    :return:
+    """
+    company_id = request.json.get('companyid')
+    rfid_code = request.json.get('rfidcode')
+
+    utils.verify_param(abort, logger, error_code=400, company_id=company_id, rfid_code=rfid_code,
+                       method_name="delete_pic")
+
+    user_id = g.user.userid
+    if User.query.filter_by(userid=user_id).first().company_id != company_id:
+        result = False
+    else:
+        cow = Archives.query.filter_by(rfid_code=rfid_code, company_id=company_id).first()
+        cow2 = LogInfo.query.filter_by(rfid_code=rfid_code, company_id=company_id).first()
+        folder_path = os.path.join(config.base_images_path, company_id, rfid_code) + os.sep
+        if cow and cow2:
+            try:
+                db.session.delete(cow)
+                db.session.delete(cow2)
+                db.session.commit()
+                shutil.rmtree(folder_path)
+                logger.info("cow rfid_code={} from company_id={} Delete successful".format(rfid_code, company_id))
+                result = True
+            except:
+                db.session.rollback()
+                logger.error("cow rfid_code={} from company_id={} Delete failed".format(rfid_code, company_id))
+                result = False
+        else:
+            logger.info("cow rfid_code={} from company_id={} not exist in the Database".format(rfid_code, company_id))
+            result = False
+    return jsonify({
+        'companyid': company_id,
+        'rfidcode': rfid_code,
         'result': result
     })
 
