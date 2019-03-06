@@ -513,7 +513,7 @@ def list_detail():
     """
     company_id = request.json.get('companyid')
     rfid_code = request.json.get('rfidcode')
-
+    # verify the existence of parameters
     utils.verify_param(abort, logger, error_code=400, company_id=company_id, rfid_code=rfid_code,
                        method_name="list_detail")
     pic_path = os.path.join(config.base_images_path, company_id, rfid_code) + os.sep
@@ -523,6 +523,7 @@ def list_detail():
         step = pic_num // 10
         if step == 0:
             step = 1
+        #Get images and encode them to base64
         pre_items = utils.read_image_to_base64(pre_files[0:pic_num:step])
         return jsonify({
             "items": pre_items
@@ -541,11 +542,12 @@ def delete_pic():
     """
     company_id = request.json.get('companyid')
     rfid_code = request.json.get('rfidcode')
-
+    # verify the existence of parameters
     utils.verify_param(abort, logger, error_code=400, company_id=company_id, rfid_code=rfid_code,
                        method_name="delete_pic")
 
     user_id = g.user.userid
+    #Verify that userid and companyid are correct
     if User.query.filter_by(userid=user_id).first().company_id != company_id:
         result = False
     else:
@@ -556,11 +558,12 @@ def delete_pic():
             try:
                 db.session.delete(cow)
                 db.session.delete(cow2)
-                db.session.commit()
                 shutil.rmtree(folder_path)
                 logger.info("cow rfid_code={} from company_id={} Delete successful".format(rfid_code, company_id))
                 result = True
+                db.session.commit()
             except:
+                #If error rollback
                 db.session.rollback()
                 logger.error("cow rfid_code={} from company_id={} Delete failed".format(rfid_code, company_id))
                 result = False
