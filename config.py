@@ -1,14 +1,13 @@
 import os
 SECRET_KEY = 'the beijing telecom research center'
+#If you want to switch databases，Here are two options（sqlite or mysql）
 SQLALCHEMY_DATABASE_URI= 'sqlite:///db.sqlite'
 # SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://root:123456@localhost:3306/cowrest'
 SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 SQLALCHEMY_TRACK_MODIFICATIONS = True
-# SQLALCHEMY_POOL_SIZE=5
-# SQLALCHEMY_POOL_TIMEOUT=10
+SQLALCHEMY_POOL_SIZE=5
+SQLALCHEMY_POOL_TIMEOUT=10
 base_images_path=os.path.join(os.path.dirname(os.path.abspath(__file__)) ,r"test")
-# base_images_path = 'f:/test_flask'
-# base_images_path = 'd:/cowrest_test'
 batch_size = 100
 model = None
 classes = []
