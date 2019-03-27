@@ -523,7 +523,7 @@ def list_detail():
         step = pic_num // 10
         if step == 0:
             step = 1
-        #Get images and encode them to base64
+        # Get images and encode them to base64
         pre_items = utils.read_image_to_base64(pre_files[0:pic_num:step])
         return jsonify({
             "items": pre_items
@@ -547,7 +547,7 @@ def delete_pic():
                        method_name="delete_pic")
 
     user_id = g.user.userid
-    #Verify that userid and companyid are correct
+    # Verify that userid and companyid are correct
     if User.query.filter_by(userid=user_id).first().company_id != company_id:
         result = False
     else:
@@ -563,7 +563,7 @@ def delete_pic():
                 result = True
                 db.session.commit()
             except:
-                #If error rollback
+                # If error rollback
                 db.session.rollback()
                 logger.error("cow rfid_code={} from company_id={} Delete failed".format(rfid_code, company_id))
                 result = False
@@ -574,6 +574,75 @@ def delete_pic():
         'companyid': company_id,
         'rfidcode': rfid_code,
         'result': result
+    })
+
+
+@app.route('/api/dead', methods=['POST'])
+@auth.login_required
+def dead():
+    """
+     Video of dead cow
+    :return:
+    """
+    # get the params first
+    user_id = g.user.userid
+    entity = request.form.get('entity')
+    utils.verify_param(abort, logger, error_code=400, entity=entity, method_name="dead")
+    json_obj = json.loads(entity)
+    company_id = json_obj.get('companyid')
+    gather_time1 = json_obj.get('gathertime')
+    gather_time = utils.verify_time_param(abort, logger, gather_time1)
+    rfid_code = json_obj.get('rfidcode')
+    ip = json_obj.get('ip')
+    imei = json_obj.get('imei')
+    try:
+        video = request.files['video']
+    except:
+        video = None
+    # verify the existence of parameters
+    utils.verify_param(abort, logger, error_code=400, user_id=user_id, json_obj=json_obj, company_id=company_id,
+                       gather_time=gather_time, rfid_code=rfid_code, ip=ip, imei=imei, video=video, method_name="dead")
+
+    # Judging video size
+    video_size = len(video.read()) / float(1000.0)
+    if video_size > config.max_video_size:
+        logger.error(
+            'From ' + ip + ' -> Upload dead cow video file : ' + video.filename + ' with size of {} kb , But video_size over 20MB failed to upload'.format(
+                video_size))
+        abort(413)
+    # make the save folder path and save the dead cow video
+    folder_path = os.path.join(config.base_images_path, "dead_{}_{}".format(company_id, rfid_code)) + os.sep
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    video.seek(0)
+    video.save(folder_path + utils.secure_filename(video.filename))
+    logger.info('From ' + ip + ' -> Upload dead cow video file : ' + video.filename + ' with size of {} kb'.format(
+        video_size))
+
+    # Change the health of cow
+    try:
+        cow = Archives.query.filter_by(rfid_code=rfid_code, company_id=company_id).first()
+        cow.health_status = "0"
+        db.session.commit()
+        logger.info(
+            "cow rfid_code = {} from company_id = {} successful to modify health_status".format(rfid_code,
+                                                                                                company_id))
+    except:
+        db.session.rollback()
+        shutil.rmtree(folder_path)
+        logger.error(
+            "cow rfid_code = {} from company_id = {} failed to modify health_status , so delete the folder".format(
+                rfid_code,
+                company_id))
+        abort(502)
+
+    return jsonify({
+        'userid': user_id,
+        'companyid': company_id,
+        'rfidcode': rfid_code,
+        'gathertime': str(gather_time),
+        'ip': ip,
+        'imei': imei,
     })
 
 
