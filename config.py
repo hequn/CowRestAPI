@@ -5,8 +5,9 @@ SQLALCHEMY_DATABASE_URI= 'sqlite:///db.sqlite'
 # SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://root:123456@localhost:3306/cowrest'
 SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 SQLALCHEMY_TRACK_MODIFICATIONS = True
-SQLALCHEMY_POOL_SIZE=5
-SQLALCHEMY_POOL_TIMEOUT=10
+# Mysql config POOL_SIZE and POOL_TIMEOUT
+# SQLALCHEMY_POOL_SIZE=5
+# SQLALCHEMY_POOL_TIMEOUT=10
 base_images_path=os.path.join(os.path.dirname(os.path.abspath(__file__)) ,r"test")
 batch_size = 100
 model = None
