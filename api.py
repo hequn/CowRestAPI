@@ -144,7 +144,7 @@ def error_400(error):
     :param error: error message
     :return: exception message
     """
-    return jsonify({"status": "1x0000", "message": "{} param not right".format(error.description)})
+    return jsonify({"status": "1x0000", "data": "", "message": "{} param not right".format(error.description)})
 
 
 @app.errorhandler(403)
@@ -154,12 +154,12 @@ def error_403(error):
     :param error:
     :return: exception message
     """
-    return jsonify({"status": "5x0001", "message": "Data already exists"})
+    return jsonify({"status": "5x0001", "data": "", "message": "Data already exists"})
 
 
 @app.errorhandler(404)
 def error_404(error):
-    return jsonify({"status": "8x0001", "message": "Accessed resources do not exist"})
+    return jsonify({"status": "8x0001", "data": "", "message": "Accessed resources do not exist"})
 
 
 @app.errorhandler(405)
@@ -169,7 +169,7 @@ def error_405(error):
 
 @app.errorhandler(413)
 def error_413(error):
-    return jsonify({"status": "6x0001", "message": "Video size needs to be less than 20MB"})
+    return jsonify({"status": "6x0001", "data": "", "message": "Video size needs to be less than 20MB"})
 
 
 @app.errorhandler(500)
@@ -184,12 +184,12 @@ def error_502(error):
     :param error:
     :return: exception message
     """
-    return jsonify({"status": "3x0000", "message": "database operation error"})
+    return jsonify({"status": "3x0000", "data": "", "message": "database operation error"})
 
 
 @app.errorhandler(501)
 def error_501(error):
-    return jsonify({"status": "7x0001", "message": "Video Interception Picture Failed"})
+    return jsonify({"status": "7x0001", "data": "", "message": "Video Interception Picture Failed"})
 
 
 ###############################################
@@ -285,7 +285,7 @@ def prospect():
     company_id = request.json.get('companyid')
     gather_time1 = request.json.get('gathertime')
     gather_time = utils.verify_time_param(abort, logger, gather_time1)
-    rfid_code = request.json.get('rfidcode')
+    # rfid_code = request.json.get('rfidcode')
     ip = request.json.get('ip')
     imei = request.json.get('imei')
     image_array = request.json.get('items')
@@ -293,7 +293,7 @@ def prospect():
     cid_array = []
     # verify the existence of parameters
     utils.verify_param(abort, logger, error_code=400, user_id=user_id, company_id=company_id, gather_time=gather_time,
-                       rfid_code=rfid_code, ip=ip, imei=imei, image_array=image_array, method_name="prospect")
+                       ip=ip, imei=imei, image_array=image_array, method_name="prospect")
     for i, item in enumerate(image_array):
         # get the base64 str and decode them to image
         img_base64 = item.get('cvalue')
@@ -314,16 +314,16 @@ def prospect():
 
     # get the predicted results and returned
     result, predict_code = utils.get_predicted_result(predict_array, cid_array)
-    if rfid_code == predict_code and result >= config.min_predict:
+    if result >= config.min_predict:
         resoult = 1
         logger.info(
-            "From ip {} -> cow rfid_code = {},company_id = {} prediction success,result = {}%".format(ip, rfid_code,
+            "From ip {} -> cow rfid_code = {},company_id = {} prediction success,result = {}%".format(ip, predict_code,
                                                                                                       company_id,
                                                                                                       result))
     else:
         resoult = 0
         logger.info(
-            "From ip {} -> cow rfid_code = {},company_id = {} prediction failure,result = {}%".format(ip, rfid_code,
+            "From ip {} -> cow rfid_code = {},company_id = {} prediction failure,result = {}%".format(ip, predict_code,
                                                                                                       company_id,
                                                                                                       result))
 
@@ -376,7 +376,7 @@ def verify():
     health_status = '1'  # json_obj.get("health_status")
     # verify the existence of parameters
     utils.verify_param(abort, logger, error_code=400, user_id=user_id, json_obj=json_obj, company_id=company_id,
-                       gather_time=gather_time, rfid_code=rfid_code, ip=ip, imei=imei, xvalue=xvalue,
+                       rfid_code=rfid_code, gather_time=gather_time, ip=ip, imei=imei, xvalue=xvalue,
                        yvalue=yvalue, width=width, height=height, video=video, age=age, health_status=health_status,
                        method_name="verify")
 
@@ -471,7 +471,12 @@ def cow_list_by_company_id():
         else:
             # return all cows list without current page or display number
             cow_list = Archives.query.filter_by(company_id=company_id).all()
-        return json.dumps(cow_list, default=json_serilize)
+
+        return jsonify({
+            "status": "200",
+            "data": json.loads(json.dumps(cow_list, default=json_serilize)),
+            "message": "Cow archives"
+        })
     except:
         logger.error("Database query cow list failed")
         abort(502)
