@@ -2,7 +2,7 @@ import os
 SECRET_KEY = 'the beijing telecom research center'
 #If you want to switch databases，Here are two options（sqlite or mysql）
 SQLALCHEMY_DATABASE_URI= 'sqlite:///db.sqlite'
-# SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://root:123456@localhost:3306/cowrest'
+# SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://root:XXXXXX@localhost:3306/cowrest'
 SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 SQLALCHEMY_TRACK_MODIFICATIONS = True
 # Mysql config POOL_SIZE and POOL_TIMEOUT
