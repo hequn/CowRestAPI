@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 from Crypto.Cipher import AES
 # models  class
 
-import inference_trained45, inference_trained
+import inference_2, inference_1
 
 
 def get_files(path, top):
@@ -56,12 +56,10 @@ def get_predicted_result(predict_images, cid_array, company_id):
     """
     # Dynamic loading class
     # Different models class are used according to different company_id
-    # module = importlib.import_module('inference_{}'.format(company_id))
-    # infer = module.Inference(company_id)
-    # results = infer.predict(predict_images)
-
-    infer = inference_trained.Inference(company_id)
+    module = importlib.import_module('inference_{}'.format(company_id))
+    infer = module.Inference(company_id)
     results = infer.predict(predict_images)
+
     # Compile the predicted results
     new_results = []
     new_results1 = []
