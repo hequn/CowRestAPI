@@ -715,4 +715,4 @@ def dead():
 if __name__ == '__main__':
     if not os.path.exists('db.sqlite'):
         db.create_all()
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0' , debug=True)
