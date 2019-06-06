@@ -3,8 +3,12 @@ import glob
 import os
 import shutil
 import datetime
-from inference import Inference
+import importlib
 from werkzeug.utils import secure_filename
+from Crypto.Cipher import AES
+# models  class
+
+import inference_trained45, inference_trained
 
 
 def get_files(path, top):
@@ -43,15 +47,22 @@ def max_list(lt):
     return max_str
 
 
-def get_predicted_result(predict_images, cid_array):
+def get_predicted_result(predict_images, cid_array, company_id):
     """
     TODO: Give the predict here.
     :param predict_images: the images array
     :param cid_array: the oriented type, left center or right : 0,1,2
     :return:
     """
-    infer = Inference()
+    # Dynamic loading class
+    # Different models class are used according to different company_id
+    # module = importlib.import_module('inference_{}'.format(company_id))
+    # infer = module.Inference(company_id)
+    # results = infer.predict(predict_images)
+
+    infer = inference_trained.Inference(company_id)
     results = infer.predict(predict_images)
+    # Compile the predicted results
     new_results = []
     new_results1 = []
     for i in results:
@@ -176,3 +187,22 @@ def verify_time_param(abort, logger, gather_time1):
     except:
         logger.error("gathertime param error from method verfiy")
         abort(400, "gathertime")
+
+
+PADDING = '\0'
+pad_it = lambda s: s + (16 - len(s) % 16) * PADDING
+iv = b'1234567890123456'
+
+
+def decrypt_aes(key, cryptedStr):
+    """
+    AES Decrypt
+    :param key: token
+    :param cryptedStr: string
+    :return:
+    """
+    generator = AES.new(key, AES.MODE_CFB, iv, segment_size=128)
+    cryptedStr = base64.b64decode(cryptedStr)
+    recovery = generator.decrypt(cryptedStr)
+    decryptedStr = recovery.rstrip(PADDING.encode('utf-8'))
+    return decryptedStr
