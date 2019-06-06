@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 import os
-from flask import Flask, abort, request, jsonify, g, url_for
+from flask import Flask, abort, request, jsonify, g, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_httpauth import HTTPBasicAuth
 from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
+from cacheout import Cache
 import cv2
 import numpy
 import base64
@@ -14,11 +15,13 @@ from io import BytesIO
 import utils
 import json
 import config
-import datetime
 import logging.config
 import glob
 import shutil
+import binascii
+import uuid
 
+cache = Cache()
 if not os.path.exists('logs'):
     os.mkdir('logs')
 logging.config.fileConfig(os.path.join(os.path.dirname(os.path.abspath(__file__)), r"log.conf"), defaults=None,
@@ -64,7 +67,7 @@ class User(db.Model):
         """
         return pwd_context.verify(password, self.password_hash)
 
-    def generate_auth_token(self, expiration=600):
+    def generate_auth_token(self, expiration=60):
         """
          generate token
         :param expiration: set expiration time
@@ -274,6 +277,63 @@ def get_auth_token():
     return jsonify({'token': token.decode('ascii'), 'duration': 600})
 
 
+@app.route('/api/get_token/<string:deviceId>')
+def get_token(deviceId):
+    """
+     get token
+    :return: token message and duration time
+    """
+    utils.verify_param(abort, logger, error_code=400, deviceId=deviceId, method_name="get_token")
+    token = binascii.b2a_base64(os.urandom(24))[:-1]
+    cache.set(deviceId, token.decode("utf-8"), ttl=60)
+    return jsonify({deviceId: token.decode("utf-8")})
+
+
+@app.route('/api/loginApp', methods=['POST'])
+def login_app():
+    """
+    User login
+    :return:
+    """
+    userid = request.json.get('un')
+    password = request.json.get('ps')
+    deviceId = request.json.get('deviceId')
+    # verify the existence of parameters
+    utils.verify_param(abort, logger, error_code=400, userid=userid, password=password, deviceId=deviceId,
+                       method_name="login_app")
+    # AES Decrypt
+    key = cache.get(deviceId).encode("utf-8")
+    userid = utils.decrypt_aes(key, userid)
+    password = utils.decrypt_aes(key, password)
+
+    user = User.query.filter_by(userid=userid).first()
+    if user and user.verify_password(password):
+        UUID = uuid.uuid1()
+        cache.set(UUID, "{}_{}".format(userid, password), ttl=60)
+        return jsonify({'url': "url?userid={}&UUID={}".format(userid, UUID)})
+    else:
+        abort(400)
+
+
+@app.route('/api/loginH5', methods=['POST'])
+def loginH5():
+    """
+    User login
+    :return: companyid
+    """
+    UUID = request.json.get('UUID')
+    # verify the existence of parameters
+    utils.verify_param(abort, logger, error_code=400, UUID=UUID, method_name="loginH5")
+    user = cache.get(UUID)
+    userid = user.split("_")[0]
+    password = user.split("_")[1]
+    user = User.query.filter_by(userid=userid).first()
+    if user and user.verify_password(password):
+        return redirect(url_for('url', user_id=userid))
+    else:
+        abort(400)
+
+
 @app.route('/api/prospect', methods=['POST'])
 @auth.login_required
 def prospect():
@@ -313,7 +373,7 @@ def prospect():
         cid_array.append(img_oriented)
 
     # get the predicted results and returned
-    result, predict_code = utils.get_predicted_result(predict_array, cid_array)
+    result, predict_code = utils.get_predicted_result(predict_array, cid_array, company_id)
     if result >= config.min_predict:
         resoult = 1
         logger.info(
@@ -655,4 +715,4 @@ def dead():
 if __name__ == '__main__':
     if not os.path.exists('db.sqlite'):
         db.create_all()
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
