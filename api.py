@@ -284,9 +284,10 @@ def get_token(deviceId):
     :return: token message and duration time
     """
     utils.verify_param(abort, logger, error_code=400, deviceId=deviceId, method_name="get_token")
-    token = binascii.b2a_base64(os.urandom(24))[:-1]
-    cache.set(deviceId, token.decode("utf-8"), ttl=60)
-    return jsonify({deviceId: token.decode("utf-8")})
+    # token = binascii.b2a_base64(os.urandom(24))[:-1]
+    token = uuid.uuid4().hex[0:16]
+    cache.set(deviceId, token, ttl=600)
+    return jsonify({deviceId: token})
 
 
 @app.route('/api/loginApp', methods=['POST'])
@@ -305,11 +306,10 @@ def login_app():
     key = cache.get(deviceId).encode("utf-8")
     userid = utils.decrypt_aes(key, userid)
     password = utils.decrypt_aes(key, password)
-
     user = User.query.filter_by(userid=userid).first()
     if user and user.verify_password(password):
         UUID = uuid.uuid1()
-        cache.set(UUID, "{}_{}".format(userid, password), ttl=60)
+        cache.set(UUID, "{}_{}".format(userid, password), ttl=600)
         return jsonify({'url': "url?userid={}&UUID={}".format(userid, UUID)})
     else:
         abort(400)

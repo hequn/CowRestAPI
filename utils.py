@@ -6,9 +6,7 @@ import datetime
 import importlib
 from werkzeug.utils import secure_filename
 from Crypto.Cipher import AES
-# models  class
-
-import inference_2, inference_1
+import config
 
 
 def get_files(path, top):
@@ -187,11 +185,6 @@ def verify_time_param(abort, logger, gather_time1):
         abort(400, "gathertime")
 
 
-PADDING = '\0'
-pad_it = lambda s: s + (16 - len(s) % 16) * PADDING
-iv = b'1234567890123456'
-
-
 def decrypt_aes(key, cryptedStr):
     """
     AES Decrypt
@@ -199,8 +192,14 @@ def decrypt_aes(key, cryptedStr):
     :param cryptedStr: string
     :return:
     """
-    generator = AES.new(key, AES.MODE_CFB, iv, segment_size=128)
+    generator = AES.new(key, AES.MODE_CFB, config.iv, segment_size=128)
     cryptedStr = base64.b64decode(cryptedStr)
     recovery = generator.decrypt(cryptedStr)
-    decryptedStr = recovery.rstrip(PADDING.encode('utf-8'))
+    temp_str = str(recovery)
+    for i in range(len(temp_str)):
+        if temp_str[i] + temp_str[i + 1] == r"\x":
+            decryptedStr = temp_str[2:i]
+            break
+        else:
+            decryptedStr = temp_str[2:]
     return decryptedStr
