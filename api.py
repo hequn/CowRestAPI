@@ -18,7 +18,6 @@ import config
 import logging.config
 import glob
 import shutil
-import binascii
 import uuid
 
 cache = Cache()
@@ -284,7 +283,6 @@ def get_token(deviceId):
     :return: token message and duration time
     """
     utils.verify_param(abort, logger, error_code=400, deviceId=deviceId, method_name="get_token")
-    # token = binascii.b2a_base64(os.urandom(24))[:-1]
     token = uuid.uuid4().hex[0:16]
     cache.set(deviceId, token, ttl=600)
     return jsonify({deviceId: token})
