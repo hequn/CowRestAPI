@@ -276,19 +276,19 @@ def get_auth_token():
     return jsonify({'token': token.decode('ascii'), 'duration': 600})
 
 
-@app.route('/api/get_token/<string:deviceId>')
-def get_token(deviceId):
+@app.route('/api/appgetms/<string:did>')
+def get_token(did):
     """
      get token
     :return: token message and duration time
     """
-    utils.verify_param(abort, logger, error_code=400, deviceId=deviceId, method_name="get_token")
+    utils.verify_param(abort, logger, error_code=400, did=did, method_name="get_token")
     token = uuid.uuid4().hex[0:16]
-    cache.set(deviceId, token, ttl=600)
-    return jsonify({deviceId: token})
+    cache.set(did, token, ttl=600)
+    return jsonify({did: token})
 
 
-@app.route('/api/loginApp', methods=['POST'])
+@app.route('/api/validateapp', methods=['POST'])
 def login_app():
     """
     User login
@@ -296,38 +296,38 @@ def login_app():
     """
     userid = request.json.get('un')
     password = request.json.get('ps')
-    deviceId = request.json.get('deviceId')
+    accessToken = request.json.get('accessToken')
     # verify the existence of parameters
-    utils.verify_param(abort, logger, error_code=400, userid=userid, password=password, deviceId=deviceId,
+    utils.verify_param(abort, logger, error_code=400, userid=userid, password=password, accessToken=accessToken,
                        method_name="login_app")
     # AES Decrypt
-    key = cache.get(deviceId).encode("utf-8")
+    key = cache.get(accessToken).encode("utf-8")
     userid = utils.decrypt_aes(key, userid)
     password = utils.decrypt_aes(key, password)
     user = User.query.filter_by(userid=userid).first()
     if user and user.verify_password(password):
-        UUID = uuid.uuid1()
-        cache.set(UUID, "{}_{}".format(userid, password), ttl=600)
-        return jsonify({'url': "url?userid={}&UUID={}".format(userid, UUID)})
+        newAccessToken = uuid.uuid1()
+        cache.set(newAccessToken, "{}_{}".format(userid, password), ttl=600)
+        return jsonify({'url': "http://101.201.121.61:6788?userName={}&userId={}&accessToken={}".format(userid,userid,newAccessToken)})
     else:
         abort(400)
 
 
-@app.route('/api/loginH5', methods=['POST'])
+@app.route('/api/loginH5App', methods=['POST'])
 def loginH5():
     """
     User login
     :return: companyid
     """
-    UUID = request.json.get('UUID')
+    accessToken = request.json.get('accessToken')
     # verify the existence of parameters
-    utils.verify_param(abort, logger, error_code=400, UUID=UUID, method_name="loginH5")
-    user = cache.get(UUID)
+    utils.verify_param(abort, logger, error_code=400, accessToken=accessToken, method_name="loginH5")
+    user = cache.get(accessToken)
     userid = user.split("_")[0]
     password = user.split("_")[1]
     user = User.query.filter_by(userid=userid).first()
     if user and user.verify_password(password):
-        return redirect(url_for('url', user_id=userid))
+        return redirect(url_for("http://101.201.121.61:6788"))
     else:
         abort(400)
 
