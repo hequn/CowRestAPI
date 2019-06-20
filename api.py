@@ -308,7 +308,8 @@ def login_app():
     if user and user.verify_password(password):
         newAccessToken = uuid.uuid1()
         cache.set(newAccessToken, "{}_{}".format(userid, password), ttl=600)
-        return jsonify({'url': "http://101.201.121.61:6788?userName={}&userId={}&accessToken={}".format(userid,userid,newAccessToken)})
+        return jsonify({'url': "http://101.201.121.61:6788?userName={}&userId={}&accessToken={}".format(userid,userid,newAccessToken),
+                        'companyid': user.company_id})
     else:
         abort(400)
 
