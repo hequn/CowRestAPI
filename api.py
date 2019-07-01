@@ -19,6 +19,7 @@ import logging.config
 import glob
 import shutil
 import uuid
+import traceback
 
 cache = Cache()
 if not os.path.exists('logs'):
@@ -342,6 +343,9 @@ def prospect():
     """
     user_id = g.user.userid
     company_id = request.json.get('companyid')
+    user = User.query.filter_by(userid=user_id).first()
+    if not (user and user.company_id == company_id):
+        abort(502)
     gather_time1 = request.json.get('gathertime')
     gather_time = utils.verify_time_param(abort, logger, gather_time1)
     # rfid_code = request.json.get('rfidcode')
@@ -388,7 +392,13 @@ def prospect():
 
     # get the previous registered images top3 and encode them to base64
     pre_files = utils.get_files(os.path.join(config.base_images_path, company_id, predict_code) + os.sep, 3)
-    pre_items = utils.read_image_to_base64(pre_files)
+
+    # noinspection PyBroadException
+    try:
+        pre_items = utils.read_image_to_base64(pre_files)
+    except Exception:
+        logger.error(traceback.format_exc())
+        abort(404)
 
     return jsonify({
         'userid': user_id,
