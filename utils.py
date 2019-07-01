@@ -192,7 +192,7 @@ def decrypt_aes(key, cryptedStr):
     :param cryptedStr: string
     :return:
     """
-    generator = AES.new(key, AES.MODE_CFB, config.iv, segment_size=128)
+    generator = AES.new(key, AES.MODE_CBC, config.iv, segment_size=128)
     cryptedStr = base64.b64decode(cryptedStr)
     recovery = generator.decrypt(cryptedStr)
     temp_str = str(recovery)
