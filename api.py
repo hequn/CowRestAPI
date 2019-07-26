@@ -204,7 +204,7 @@ def error_501(error):
 def new_user():
     """
     Add the user to the db.
-    :return:
+    :return: 
     """
     userid = request.json.get('userid')
     password = request.json.get('password')
@@ -224,7 +224,7 @@ def new_user():
     except:
         logger.error("failure to store user(userid={},company_id={}) to database".format(userid, company_id))
         abort(502)
-    return (jsonify({'userid': user.userid, 'company_id': user.company_id}), 201,
+    return (jsonify({'userid': user.userid, 'companyid': user.company_id}), 201,
             {'Location': url_for('get_user', userid=user.userid, _external=True)})
 
 
@@ -248,7 +248,7 @@ def login():
             company_id = ""
     else:
         company_id = ""
-    return (jsonify({'companyid': company_id}))
+    return jsonify({'companyid': company_id})
 
 
 @app.route('/api/users/<int:userid>')
@@ -260,7 +260,7 @@ def get_user(userid):
     """
     user = User.query.get(userid)
     if user:
-        return jsonify({'userid': user.userid})
+        return jsonify({'userid': user.userid, 'companyid':user.company_id})
     else:
         logger.error("No user with userid = {} exists".format(userid))
         abort(502)
@@ -519,9 +519,9 @@ def cow_list_by_company_id():
         return {
             "userid": g.user.userid,
             "aid": instance.aid,
-            "rfid_code": instance.rfid_code,
+            "rfidcode": instance.rfid_code,
             "age": instance.age,
-            "company_id": instance.company_id,
+            "companyid": instance.company_id,
             "gather_time": str(instance.gather_time),
             "health_status": instance.health_status,
             "extra_info": instance.extra_info,
@@ -573,7 +573,7 @@ def verify_cow_exists():
     return jsonify({
         'userid': user_id,
         'companyid': company_id,
-        'rfid_code': rfid_code,
+        'rfidcode': rfid_code,
         'result': result
     })
 
