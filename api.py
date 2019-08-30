@@ -169,6 +169,10 @@ def error_404(error):
 def error_405(error):
     return str(error)
 
+@app.errorhandler(406)
+def error_406(error):
+    return jsonify({"status": "9x0001", "data": "", "message": "There is no corresponding model for this companyid"})
+
 
 @app.errorhandler(413)
 def error_413(error):
@@ -376,7 +380,12 @@ def prospect():
         cid_array.append(img_oriented)
 
     # get the predicted results and returned
-    result, predict_code = utils.get_predicted_result(predict_array, cid_array, company_id)
+    try:
+        result, predict_code = utils.get_predicted_result(predict_array, cid_array, company_id)
+    except ModuleNotFoundError as e:
+        logger.error(e)
+        abort(406)
+
     if result >= config.min_predict:
         resoult = 1
         logger.info(
