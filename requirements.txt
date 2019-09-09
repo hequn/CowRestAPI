@@ -14,3 +14,4 @@ opencv-python==3.4.4.19
 keras==2.2.4
 scikit-learn==0.20.1
 tensorflow>=1.12.1
+pycrypto==2.6.1
